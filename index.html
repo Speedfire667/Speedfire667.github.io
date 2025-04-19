@@ -4,95 +4,132 @@
   <meta charset="UTF-8">
   <title>Bio do Canal</title>
   <style>
+    /* Estilos para a página */
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #1e1e2f, #2d2d44);
+      background: #121212;
       color: #fff;
+      margin: 0;
+      padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem;
     }
     h1 {
-      margin-bottom: 1rem;
+      margin-top: 20px;
     }
-    ul {
-      list-style: none;
-      padding: 0;
+    .card {
+      background: #1e1e2f;
+      border-radius: 10px;
+      margin: 10px;
+      padding: 20px;
+      width: 300px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-    li {
-      background: #383858;
-      margin: 0.5rem 0;
-      padding: 0.8rem 1.2rem;
-      border-radius: 12px;
-      transition: transform 0.2s ease;
-    }
-    li:hover {
-      transform: scale(1.05);
-      background: #4a4a6a;
-    }
-    input, button {
-      margin-top: 1rem;
-      padding: 0.6rem 1rem;
-      font-size: 1rem;
-      border: none;
+    .card img {
+      width: 100%;
       border-radius: 8px;
     }
-    input {
-      width: 250px;
-    }
-    button {
-      background-color: #00c6ff;
+    .card a {
+      display: block;
+      margin-top: 10px;
+      padding: 10px;
+      background: #00c6ff;
       color: #fff;
-      margin-left: 0.5rem;
-      cursor: pointer;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background 0.3s;
     }
-    button:hover {
-      background-color: #00a2cc;
+    .card a:hover {
+      background: #00a2cc;
+    }
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+    }
+    .form-container input, .form-container textarea {
+      margin: 5px;
+      padding: 10px;
+      width: 300px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .form-container button {
+      padding: 10px;
+      background: #00c6ff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .form-container button:hover {
+      background: #00a2cc;
     }
   </style>
 </head>
 <body>
-  <h1>Links do Canal</h1>
-  <ul id="lista-links"></ul>
 
-  <div>
-    <input type="text" id="novoLink" placeholder="Novo link" />
-    <button onclick="adicionarLink()">Adicionar</button>
+  <h1>Links do Canal</h1>
+  <div id="cards-container"></div>
+
+  <!-- Formulário para adicionar novo card -->
+  <div class="form-container">
+    <input type="text" id="titulo" placeholder="Título" />
+    <input type="text" id="imagem" placeholder="URL da Imagem" />
+    <textarea id="descricao" placeholder="Descrição"></textarea>
+    <input type="url" id="link" placeholder="URL do Link" />
+    <button onclick="adicionarCard()">Adicionar Card</button>
   </div>
 
   <script>
-    const BIN_ID = "664a49b1ad19ca34f87ad3d1"; // seu bin
-    const API_KEY = "$2a$10$e.No.VCnsylLumspynQ9y.FbpyYyig4ZnmzVxPK61ou5mhdK/72p."; // sua API
+    const BIN_ID = '664a49b1ad19ca34f87ad3d1';
+    const API_KEY = '$2a$10$/wwWc8dh6LXHlRtcI5amEekcD9jL4CGv86OYtak5OTBJGCjH9u4PS';
     const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-    async function carregarLinks() {
+    // Função para carregar os cards
+    async function carregarCards() {
       const res = await fetch(BASE_URL + '/latest', {
         headers: { 'X-Master-Key': API_KEY }
       });
       const json = await res.json();
-      const links = json.record.links;
-
-      const lista = document.getElementById("lista-links");
-      lista.innerHTML = '';
-      links.forEach(link => {
-        const li = document.createElement("li");
-        li.innerHTML = `<a href="${link}" target="_blank" style="color:white; text-decoration:none;">${link}</a>`;
-        lista.appendChild(li);
+      const cards = json.record.cards || [];
+      const container = document.getElementById('cards-container');
+      container.innerHTML = '';
+      cards.forEach(card => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <img src="${card.imagem}" alt="${card.titulo}" />
+          <h2>${card.titulo}</h2>
+          <p>${card.descricao}</p>
+          <a href="${card.link}" target="_blank">Visitar</a>
+        `;
+        container.appendChild(div);
       });
     }
 
-    async function adicionarLink() {
-      const input = document.getElementById("novoLink");
-      const novo = input.value.trim();
-      if (!novo) return;
+    // Função para adicionar um novo card
+    async function adicionarCard() {
+      const titulo = document.getElementById('titulo').value;
+      const imagem = document.getElementById('imagem').value;
+      const descricao = document.getElementById('descricao').value;
+      const link = document.getElementById('link').value;
+
+      if (!titulo || !imagem || !descricao || !link) {
+        alert('Por favor, preencha todos os campos.');
+        return;
+      }
 
       const res = await fetch(BASE_URL + '/latest', {
         headers: { 'X-Master-Key': API_KEY }
       });
       const json = await res.json();
-      const links = json.record.links;
-      links.push(novo);
+      const cards = json.record.cards || [];
+      cards.push({ titulo, imagem, descricao, link });
 
       await fetch(BASE_URL, {
         method: 'PUT',
@@ -100,14 +137,14 @@
           'Content-Type': 'application/json',
           'X-Master-Key': API_KEY
         },
-        body: JSON.stringify({ links })
+        body: JSON.stringify({ cards })
       });
 
-      input.value = '';
-      carregarLinks();
+      carregarCards();
     }
 
-    carregarLinks();
+    carregarCards();
   </script>
+
 </body>
 </html>
